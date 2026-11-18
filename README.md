@@ -22,6 +22,8 @@ A community adaptation of Google AI Edge Gallery for the Retroid Pocket Duo. Bas
 
 Original device captures from one short demonstration; displayed speed is not a benchmark guarantee. A separate device-frame asset is being refined. This is a community project; Google and Retroid do not endorse it.
 
+Model weights are not included in this repository or the published APK. Files under `model_allowlists/` are JSON metadata and download configuration. Download or import models separately; the APK includes the inference runtimes and native libraries for multiple CPU architectures.
+
 ## Install
 
 1. Download the APK from this fork’s Releases and allow Android to install it.
