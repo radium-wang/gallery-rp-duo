@@ -1,6 +1,6 @@
 # AI Edge Gallery · RP Duo
 
-[Download APK](https://github.com/radium-wang/gallery-rp-duo/releases/latest) · [中文说明](README.zh-CN.md) · [Upstream Gallery](https://github.com/google-ai-edge/gallery)
+[Download APK](https://github.com/radium-wang/gallery-rp-duo/releases) · [中文说明](README.zh-CN.md) · [Upstream Gallery](https://github.com/google-ai-edge/gallery)
 
 A community adaptation of Google AI Edge Gallery for the Retroid Pocket Duo. Based on upstream 1.0.23, commit 9cb31cf47c21b0ed76901ff589a52b509803edfa. Android changes maintained by radium-wang.
 

@@ -1,6 +1,6 @@
 # AI Edge Gallery · RP Duo
 
-[下载安装包](https://github.com/radium-wang/gallery-rp-duo/releases/latest) · [English](README.md) · [原项目](https://github.com/google-ai-edge/gallery)
+[下载安装包](https://github.com/radium-wang/gallery-rp-duo/releases) · [English](README.md) · [原项目](https://github.com/google-ai-edge/gallery)
 
 面向 Retroid Pocket Duo 的社区适配版，基于 Google AI Edge Gallery 1.0.23，由 radium-wang 维护。
 
