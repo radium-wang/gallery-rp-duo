@@ -4,9 +4,9 @@
 
 面向 Retroid Pocket Duo 的社区适配版，基于 Google AI Edge Gallery 1.0.23，由 radium-wang 维护。
 
-<img src="docs/screenshots/rp-duo-preview.png" width="680" alt="灰彩 RP Duo 完全展开正视图，上屏对话、下屏指标与系统键盘" />
+[上屏真机截图](docs/screenshots/upper-display.png) · [下屏真机截图](docs/screenshots/lower-display.png)
 
-外框根据 RP Duo 16Bit 外观由 AI 生成，屏幕内容来自真机截图。[上屏原图](docs/screenshots/upper-display.png) · [下屏原图](docs/screenshots/lower-display.png)。这是社区项目，与 Google、Retroid 无官方隶属关系。
+外框素材正在独立完善，主页暂用真实截图。这是社区项目，与 Google、Retroid 无官方隶属关系。
 
 ## 适配功能
 

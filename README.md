@@ -16,9 +16,11 @@ A community adaptation of Google AI Edge Gallery for the Retroid Pocket Duo. Bas
 
 ## Screenshots
 
-<img src="docs/screenshots/rp-duo-preview.png" width="680" alt="AI Edge Gallery on a fully open RP Duo, front view in grey with coloured buttons" />
+<img src="docs/screenshots/upper-display.png" width="720" alt="Upper display showing a local Gemma 4 E2B conversation" />
 
-AI-generated device frame based on the RP Duo 16Bit appearance, with actual app captures inserted. See the [original upper](docs/screenshots/upper-display.png) and [lower](docs/screenshots/lower-display.png) display captures for UI details. This is a community project; Google and Retroid do not endorse it.
+<img src="docs/screenshots/lower-display.png" width="640" alt="Lower display showing metrics, composer and pinned system keyboard" />
+
+Original device captures from one short demonstration; displayed speed is not a benchmark guarantee. A separate device-frame asset is being refined. This is a community project; Google and Retroid do not endorse it.
 
 ## Install
 
