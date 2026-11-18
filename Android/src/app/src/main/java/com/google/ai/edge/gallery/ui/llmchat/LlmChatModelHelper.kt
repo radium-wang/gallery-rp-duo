@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -194,8 +195,7 @@ object LlmChatModelHelper : LlmModelHelper {
       )
     // Create an instance of LiteRT LM engine and conversation.
     try {
-      val enableBenchmark = false
-      ExperimentalFlags.enableBenchmark = enableBenchmark
+      ExperimentalFlags.enableBenchmark = model.supportModelBenchmark
       ExperimentalFlags.enableSpeculativeDecoding = speculativeDecoding
       Log.d(TAG, "Speculative decoding enabled: $speculativeDecoding")
       val engine = Engine(engineConfig)

@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -434,18 +435,17 @@ fun TaskConfigDialog(
       var same = true
       var modelConfigChanged = false
       var needReinitialization = false
+      val visibleConfigKeys = modelConfigs.map { it.key.label }.toSet()
+      val editedValues = curConfigValues.filterKeys { it in visibleConfigKeys }
       for (config in modelConfigs) {
         val key = config.key.label
+        val editedValue = editedValues[key] ?: continue
         val oldValue =
           convertValueToTargetType(
-            value = dialogInitialValues.getValue(key),
+            value = dialogInitialValues[key] ?: config.defaultValue,
             valueType = config.valueType,
           )
-        val newValue =
-          convertValueToTargetType(
-            value = curConfigValues.getValue(key),
-            valueType = config.valueType,
-          )
+        val newValue = convertValueToTargetType(value = editedValue, valueType = config.valueType)
         if (oldValue != newValue) {
           same = false
           if (config.key != ConfigKeys.ENABLE_AUTO_CONTEXT_COMPACT) {
@@ -483,7 +483,7 @@ fun TaskConfigDialog(
       // Save the config values to Model (excluding task-level auto context compaction setting).
       val oldConfigValues = model.configValues
       model.prevConfigValues = oldConfigValues
-      model.configValues = curConfigValues.filterKeys {
+      model.configValues = oldConfigValues + editedValues.filterKeys {
         it != ConfigKeys.ENABLE_AUTO_CONTEXT_COMPACT.label
       }
       when (task.id) {
@@ -515,7 +515,7 @@ fun TaskConfigDialog(
         }
 
         // Notify.
-        onConfigChanged(dialogInitialValues, curConfigValues)
+        onConfigChanged(dialogInitialValues, dialogInitialValues + editedValues)
       }
     },
     showSystemPromptEditorTab = allowEditingSystemPrompt,

@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -217,6 +218,9 @@ data class AllowedModel(
       val defaultTopP: Float = defaultConfig?.topP ?: DEFAULT_TOPP
       val defaultTemperature: Float = defaultConfig?.temperature ?: DEFAULT_TEMPERATURE
       llmMaxToken = defaultConfig?.maxTokens?.takeIf { it > 0 } ?: DEFAULT_MAX_TOKEN
+      if (name == "Gemma-4-E2B-it" && Build.MODEL.equals("Retroid Pocket Duo", ignoreCase = true)) {
+        llmMaxToken = minOf(llmMaxToken, 2048)
+      }
       val llmMaxContextLength = defaultConfig?.maxContextLength
       val npuOnly =
         accelerators.size == 1 &&

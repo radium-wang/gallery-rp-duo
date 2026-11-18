@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -115,9 +116,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -195,6 +198,8 @@ fun MessageInputText(
   modelInitializing: Boolean,
   @StringRes textFieldPlaceHolderRes: Int,
   onValueChanged: (String) -> Unit,
+  editorModifier: Modifier = Modifier,
+  onEditorFocusChanged: (Boolean) -> Unit = {},
   onSendMessage: (List<ChatMessage>) -> Unit,
   modelPreparing: Boolean = false,
   onOpenPromptTemplatesClicked: () -> Unit = {},
@@ -213,6 +218,8 @@ fun MessageInputText(
   showLiveMetricsPrompt: Boolean = false,
   onDismissLiveMetricsPrompt: () -> Unit = {},
   onToggleLiveMetrics: () -> Unit = {},
+  displayModeButton: @Composable () -> Unit = {},
+  keyboardPinButton: @Composable () -> Unit = {},
   showImagePicker: Boolean = false,
   showAudioPicker: Boolean = false,
   showTextFilePicker: Boolean = false,
@@ -596,7 +603,11 @@ fun MessageInputText(
                       disabledContainerColor = Color.Transparent,
                     ),
                   textStyle = bodyLargeNarrow,
-                  modifier = Modifier.weight(1f).semantics { contentDescription = cdPromptInput },
+                  modifier =
+                    Modifier.weight(1f)
+                      .then(editorModifier)
+                      .onFocusChanged { onEditorFocusChanged(it.isFocused) }
+                      .semantics { contentDescription = cdPromptInput },
                   placeholder = { Text(stringResource(textFieldPlaceHolderRes)) },
                 )
                 Spacer(modifier = Modifier.width(4.dp))
@@ -976,7 +987,9 @@ fun MessageInputText(
 
                   // Live metrics toggle.
                   if (showLiveMetricsToggle) {
-                    LiveMetricsToggleButton(
+                    ChatToolbarToggleButton(
+                      icon = Icons.Outlined.InsertChart,
+                      contentDescription = stringResource(R.string.cd_toggle_live_metrics),
                       checked = isLiveMetricsVisible,
                       enabled = enableLiveMetricsToggle,
                       showPromptLabel = showPromptLabel,
@@ -986,6 +999,8 @@ fun MessageInputText(
                       },
                     )
                   }
+                  displayModeButton()
+                  keyboardPinButton()
                 }
 
                 // Voice input (speech-to-text) button.
@@ -1403,15 +1418,14 @@ private fun checkFrontCamera(context: Context, callback: (Boolean) -> Unit) {
   val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
   cameraProviderFuture.addListener(
     {
-      val cameraProvider = cameraProviderFuture.get()
-      try {
-        // Attempt to select the default front camera
-        val hasFront = cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
-        callback(hasFront)
-      } catch (e: Exception) {
-        e.printStackTrace()
-        callback(false)
-      }
+      val hasFrontCamera =
+        try {
+          cameraProviderFuture.get().hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
+        } catch (e: Exception) {
+          Log.w(TAG, "Front camera unavailable", e)
+          false
+        }
+      callback(hasFrontCamera)
     },
     ContextCompat.getMainExecutor(context),
   )
@@ -1642,10 +1656,12 @@ private class SensorObserver(context: Context) : DefaultLifecycleObserver, Senso
 }
 
 @Composable
-private fun LiveMetricsToggleButton(
+internal fun ChatToolbarToggleButton(
+  icon: ImageVector,
+  contentDescription: String,
   checked: Boolean,
   enabled: Boolean,
-  showPromptLabel: Boolean,
+  showPromptLabel: Boolean = false,
   onToggle: () -> Unit,
 ) {
   val containerColor =
@@ -1688,8 +1704,8 @@ private fun LiveMetricsToggleButton(
       horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
       Icon(
-        Icons.Outlined.InsertChart,
-        contentDescription = stringResource(R.string.cd_toggle_live_metrics),
+        icon,
+        contentDescription = contentDescription,
         modifier = Modifier.size(20.dp),
       )
       AnimatedVisibility(visible = showPromptLabel) {

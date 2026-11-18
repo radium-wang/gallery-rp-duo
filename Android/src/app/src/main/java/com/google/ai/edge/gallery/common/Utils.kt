@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -25,6 +26,7 @@ import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.compose.foundation.layout.WindowInsets
@@ -415,7 +417,17 @@ fun getModelStorageDir(context: Context): File {
   return if (isPixel11() && isCd1aBuild) {
     context.filesDir
   } else {
-    context.getExternalFilesDir(null) ?: context.filesDir
+    val removableModelsDir =
+      context.getExternalFilesDirs(null)
+        .filterNotNull()
+        .firstOrNull {
+          Environment.isExternalStorageRemovable(it) &&
+            Environment.getExternalStorageState(it) == Environment.MEDIA_MOUNTED
+        }
+        ?.resolve("AI-Models")
+    removableModelsDir?.takeIf { it.isDirectory || it.mkdirs() }
+      ?: context.getExternalFilesDir(null)
+      ?: context.filesDir
   }
 }
 

@@ -1,93 +1,52 @@
-# Google AI Edge Gallery ✨
+# AI Edge Gallery · RP Duo
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/google-ai-edge/gallery)](https://github.com/google-ai-edge/gallery/releases)
+[Download APK](https://github.com/radium-wang/gallery-rp-duo/releases/latest) · [中文说明](README.zh-CN.md) · [Upstream Gallery](https://github.com/google-ai-edge/gallery)
 
-**Explore, Experience, and Evaluate the Future of On-Device Generative AI with Google AI Edge.**
+A community adaptation of Google AI Edge Gallery for the Retroid Pocket Duo. Based on upstream 1.0.23, commit 9cb31cf47c21b0ed76901ff589a52b509803edfa. Android changes maintained by radium-wang.
 
-AI Edge Gallery is the premier destination for running the world's most powerful open-source Large Language Models (LLMs) on your mobile device. Experience high-performance Generative AI directly on your hardware—fully offline, private, and lightning-fast.
+## RP Duo features
 
-**Now Featuring: [EmbeddingGemma 2](https://developers.googleblog.com/google-ai-edge-with-embeddinggemma-2/)**
+- Chat replies and model settings on the upper display, with the composer on the lower display.
+- Circular controls for metrics, single/dual display mode and keyboard lock.
+- Keyboard lock keeps the lower-display system keyboard visible while tapping or scrolling the upper display. Tap the keyboard button again to release it.
+- Expanded lower-display telemetry with decoding speed, time to first token, prefill speed, token counts, peak RAM and context usage.
+- Model downloads use an available removable microSD card under the app-specific AI-Models folder, with internal storage fallback.
+- Camera detection handles devices without a front camera.
+- Gemma 4 E2B defaults to a 2048-token context on RP Duo.
 
-The latest version brings official support for the newly released EmbeddingGemma 2 model. With this release, we bring cutting edge, multimodal semantic search running 100% on your device. Try out these new capabilities in our new features Instant Media Search and Video Moment Finder.
+## Screenshots
 
+<img src="docs/screenshots/rp-duo-preview.png" width="680" alt="AI Edge Gallery on a fully open RP Duo, front view in grey with coloured buttons" />
 
-| **Install the app today from Google Play** | **Install the app today from App Store** | **Download for macOS** |
-| :--- | :--- | :--- |
-| <a href='https://play.google.com/store/apps/details?id=com.google.ai.edge.gallery'><img alt='Get it on Google Play' height="120" src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png'/></a> | <a href="https://apps.apple.com/us/app/google-ai-edge-gallery/id6749645337?itscg=30200&itsct=apps_box_badge&mttnsubad=6749645337" style="display: inline-block;"> <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us?releaseDate=1771977600" alt="Download on the App Store" style="width: 244px; height: 88px; vertical-align: middle; object-fit: contain;" /></a> | <a href="https://dl.google.com/google-ai-edge-gallery/macos/dmg/GoogleAIEdgeGallery-0.1.0.dmg"><img alt='Download for macOS' width="257" height="97" src="https://github.com/user-attachments/assets/29c70795-93b3-4e8b-8752-0cad4e413182" /></a> |
+AI-generated device frame based on the RP Duo 16Bit appearance, with actual app captures inserted. See the [original upper](docs/screenshots/upper-display.png) and [lower](docs/screenshots/lower-display.png) display captures for UI details. This is a community project; Google and Retroid do not endorse it.
 
-For users without Google Play access, install the apk from the [**latest release**](https://github.com/google-ai-edge/gallery/releases/latest/)
+## Install
 
+1. Download the APK from this fork’s Releases and allow Android to install it.
+2. Open AI Chat and download or import a compatible LiteRT-LM model. This build has no configured Hugging Face OAuth client: gated-model sign-in is unavailable. Accept the publisher’s terms, obtain a compatible `.litertlm` file and import it manually, or build with your own OAuth configuration as described in DEVELOPMENT.md.
+3. Tap the stacked-screen button to move the composer to the lower display. Tap the keyboard button to lock the system keyboard.
 
-## App Preview
+The package ID is com.google.aiedge.gallery, matching the earlier local adaptation and allowing signed updates from this release line. Google’s upstream package is com.google.ai.edge.gallery. The removable-card location is Android/data/com.google.aiedge.gallery/files/AI-Models. Android removes app-specific model files when the app is uninstalled. Back them up before uninstalling.
 
-<img width="480" alt="01" src="https://github.com/user-attachments/assets/a270ffe9-c557-4f7d-8af1-209868a5cc95" />
-<img width="480" alt="02" src="https://github.com/user-attachments/assets/9480e21a-3545-41b3-945a-29fdf9be3b8d" />
-<img width="480" alt="03" src="https://github.com/user-attachments/assets/d82796c0-4072-4a99-bbe9-bbf3a9e314ff" />
-<img width="480" alt="04" src="https://github.com/user-attachments/assets/2bd59bc5-4b20-4f7a-b44f-6fc3cd217d22" />
-<img width="480" alt="05" src="https://github.com/user-attachments/assets/ebff12e8-60d5-4efa-96dd-2eaa5f5457c4" />
-<img width="480" alt="06" src="https://github.com/user-attachments/assets/c4891c86-e114-44cf-be99-5f948fc77bc3" />
-<img width="480" alt="07" src="https://github.com/user-attachments/assets/7f690bba-fcf9-4926-9142-c4176dc04672" />
-<img width="480" alt="08" src="https://github.com/user-attachments/assets/31f1d25f-f1ec-41bf-bb39-1c5f9a36223d" />
+## Build and maintain
 
-## ✨ Core Features
+The adaptation branch is rp-duo. The main branch tracks the forked upstream snapshot. New adaptations can be merged or cherry-picked from upstream.
 
-* **Agent Skills**: Transform your LLM from a conversationalist into a proactive assistant. Use the Agent Skills tile to augment model capabilities with tools like Wikipedia for fact-grounding, interactive maps, and rich visual summary cards. You can even load modular skills from a URL or browse community contributions on GitHub Discussions.
+Use JDK 17 or 21, Android SDK platform 37.0 and the included Gradle wrapper.
 
-* **AI Chat with ASR & TTS**: Talk to your model instead of typing. Tap the mic button to dictate your message with on-device speech recognition, and tap the speaker on any reply (or turn on auto-play) to hear it read aloud. Choose your speech recognition and text-to-speech engines, voices, and languages in the chat's Audio settings.
+```sh
+cd Android/src
+./gradlew :app:assembleDebug
+```
 
-* **XR Language Teacher**: Learn a new language from the world around you. Point your camera at an object and ask about it by image, voice, or text. Your AI teacher answers in the language you're learning, reads the answer aloud, and turns key words into vocabulary cards you can save and study later. Use it on your phone, or hands-free with supported Android XR glasses.
+The APK is generated at Android/src/app/build/outputs/apk/debug/app-debug.apk. Local builds use a developer-specific signing certificate. Published APKs are non-debuggable release builds signed with the maintainer’s persistent certificate. Future published updates must use the same signing key.
 
-* **Instant Media Search**: Explore your photo library (or built-in sample media) with fast, search-as-you-type natural language queries and image-to-image similarity matching—with zero cloud roundtrips.
+The release build uses the signing configuration declared in app/build.gradle.kts. Configure your own keystore before distributing your own builds. See DEVELOPMENT.md for upstream OAuth configuration. The Android build workflow produces a downloadable development artifact.
 
-* **Video Moment Finder**: Pinpoint exact moments inside videos using natural language descriptions. Jump straight to highlighted timestamps on an interactive timeline, trim clips, and save or export your favorite moments
+## Tested scope
 
-* **Ask Image**: Use multimodal power to identify objects, solve visual puzzles, or get detailed descriptions using your device’s camera or photo gallery.
+Tested on a physical Retroid Pocket Duo with Gemma 4 E2B using LiteRT-LM. Other models and devices need their own verification. Performance depends on model, backend, context and device state. See release notes for validation and known issues.
 
-* **Audio Scribe**: Transcribe and translate voice recordings into text in real-time using high-efficiency on-device language models.
+## Attribution and license
 
-* **Prompt Lab**: A dedicated workspace to test different prompts and single-turn use cases with granular control over model parameters like temperature and top-k.
-
-* **Mobile Actions**: Unlock offline device controls and automated tasks powered entirely by a finetune of FunctionGemma 270m.
-
-* **Tiny Garden**: A fun, experimental mini-game that uses natural language to plant and harvest a virtual garden using a finetune of FunctionGemma 270m.
-
-* **Model Management & Benchmark**: Gallery is a flexible sandbox for a wide variety of open-source models. Easily download models from the list or load your own custom models. Manage your model library effortlessly and run benchmark tests to understand exactly how each model performs on your specific hardware.
-
-* **100% On-Device Privacy**: All model inferences happen directly on your device hardware. No internet is required, ensuring total privacy for your prompts, images, and sensitive data.
-
-## 🏁 Get Started in Minutes!
-
-1. **Check OS Requirement**: Android 12 and up, and iOS 17 and up.
-2.  **Download the App:**
-    - Install the app from [Google Play](https://play.google.com/store/apps/details?id=com.google.ai.edge.gallery) or [App Store](https://apps.apple.com/us/app/google-ai-edge-gallery/id6749645337).
-    - For users without Google Play access: install the apk from the [**latest release**](https://github.com/google-ai-edge/gallery/releases/latest/)
-3.  **Install & Explore:** For detailed installation instructions (including for corporate devices) and a full user guide, head over to our [**Project Wiki**](https://github.com/google-ai-edge/gallery/wiki)!
-
-## 🛠️ Technology Highlights
-
-*   **Google AI Edge:** Core APIs and tools for on-device ML.
-*   **LiteRT:** Lightweight runtime for optimized model execution.
-*   **Hugging Face Integration:** For model discovery and download.
-
-## ⌨️ Development
-
-Check out the [development notes](DEVELOPMENT.md) for instructions about how to build the app locally.
-
-## 🤝 Feedback
-
-This is an **experimental Beta release**, and your input is crucial!
-
-*   🐞 **Found a bug?** [Report it here!](https://github.com/google-ai-edge/gallery/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D)
-*   💡 **Have an idea?** [Suggest a feature!](https://github.com/google-ai-edge/gallery/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=%5BFEATURE%5D)
-
-## 📄 License
-
-Licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.
-
-## 🔗 Useful Links
-
-*   [**Project Wiki (Detailed Guides)**](https://github.com/google-ai-edge/gallery/wiki)
-*   [Hugging Face LiteRT Community](https://huggingface.co/litert-community)
-*   [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM)
-*   [Google AI Edge Documentation](https://ai.google.dev/edge)
+Based on Google AI Edge Gallery under Apache License 2.0. Original copyright notices and LICENSE are retained. Modified Android source files identify the RP Duo adaptation. This community fork is maintained by radium-wang. Model weights are distributed by their publishers under their respective terms.

@@ -24,9 +24,16 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Device & App Information (Please complete the following):**
-- Device: [e.g., Samsung Galaxy S23, Google Pixel 7]
-- Android Version: [e.g., Android 12, Android 13]
-- App Version: [e.g., 1.0.1, v1.0.2]
+- Device: [e.g., Retroid Pocket Duo]
+- Android Version: [e.g., Android 16]
+- App Version: [e.g., 1.0.23-rpduo.1]
 
 **Additional context:**    
 Add any other context about the problem here.
+
+**RP Duo details:**
+- Single or dual display:
+- Keyboard app and keyboard lock enabled:
+- Model, backend and context size:
+- microSD or internal storage:
+- For ANR: idle duration and relevant logcat/exit-info (remove private prompts and tokens).

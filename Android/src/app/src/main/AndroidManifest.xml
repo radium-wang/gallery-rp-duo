@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Modified for Retroid Pocket Duo by radium-wang, 2026. -->
 <!--
  Copyright 2025 Google LLC
 
@@ -58,7 +59,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="${appIcon}"
-        android:label="Edge Gallery"
+        android:label="@string/app_name"
         android:roundIcon="${appIcon}"
         android:supportsRtl="true"
         android:theme="@style/Theme.Gallery"
@@ -79,12 +80,6 @@
             android:windowSoftInputMode="adjustResize"
             android:configChanges="uiMode"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
-            <!-- This is for putting the app into launcher -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
             <!-- This is for deep linking -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -97,6 +92,28 @@
         </activity>
 
         <!-- Set themes for activities that are used for viewing open source licenses -->
+        <activity
+            android:name="com.google.ai.edge.gallery.GalleryLauncherActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="${applicationId}.launcher"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.google.ai.edge.gallery.ui.common.chat.SecondaryChatActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity="${applicationId}.chatComposer"
+            android:resizeableActivity="true"
+            android:theme="@style/Theme.Gallery.SecondaryChat"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
             android:exported="true"

@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -78,6 +79,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -203,6 +205,14 @@ fun ConfigDialog(
 ) {
   val values: SnapshotStateMap<String, Any> = remember {
     mutableStateMapOf<String, Any>().apply { putAll(initialValues) }
+  }
+  LaunchedEffect(configs, initialValues) {
+    for (config in configs) {
+      val key = config.key.label
+      if (key !in values) {
+        values[key] = initialValues[key] ?: config.defaultValue
+      }
+    }
   }
   val savedSystemPrompt = remember { curSystemPrompt }
   var systemPrompt by remember { mutableStateOf(curSystemPrompt) }

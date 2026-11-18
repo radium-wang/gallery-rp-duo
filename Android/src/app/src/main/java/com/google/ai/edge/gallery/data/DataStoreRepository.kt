@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -563,7 +564,7 @@ class DefaultDataStoreRepository(
   override fun readShowLiveMetrics(taskId: String): Boolean {
     return runBlocking {
       val settings = dataStore.data.first()
-      settings.showLiveMetricsByTaskMap[taskId] ?: false
+      settings.showLiveMetricsByTaskMap[taskId] ?: (taskId == BuiltInTaskId.LLM_CHAT)
     }
   }
 

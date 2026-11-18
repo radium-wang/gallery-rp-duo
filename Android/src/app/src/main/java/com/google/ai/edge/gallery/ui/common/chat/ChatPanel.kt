@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -21,6 +22,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import android.view.WindowManager
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -58,8 +61,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.ThumbDown
 import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,6 +76,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -82,11 +88,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -100,6 +109,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -112,6 +122,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.ai.edge.gallery.R
 import com.google.ai.edge.gallery.data.BuiltInTaskId
+import com.google.ai.edge.gallery.data.supportModelBenchmark
 import com.google.ai.edge.gallery.data.Model
 import com.google.ai.edge.gallery.data.Task
 import com.google.ai.edge.gallery.ui.common.AudioAnimation
@@ -176,9 +187,8 @@ fun ChatPanel(
   val uiState by viewModel.uiState.collectAsState()
   val messages = uiState.messagesByModel[selectedModel.name] ?: listOf()
   val modelInitStatus by selectedModel.initStatusFlow.collectAsState()
-  val isLiveMetricsFlagEnabled = false
   val isTextFileInputEnabled = false
-  val isLiveMetricsSupported = isLiveMetricsFlagEnabled && !selectedModel.isAiCore
+  val isLiveMetricsSupported = selectedModel.supportModelBenchmark
   val hasLiveMetrics by
     remember(viewModel, selectedModel.name, isLiveMetricsSupported) {
         if (isLiveMetricsSupported) {
@@ -208,7 +218,7 @@ fun ChatPanel(
   val audioConfigOnboardingPromoViewed by
     modelManagerViewModel.audioConfigOnboardingPromoViewed.collectAsStateWithLifecycle()
 
-  if (isLiveMetricsFlagEnabled) {
+  if (isLiveMetricsSupported) {
     LaunchedEffect(viewModel, task.id, selectedModel) {
       viewModel.loadLiveMetricsVisibility(task.id)
       viewModel.observeLiveMetrics(selectedModel)
@@ -238,6 +248,30 @@ fun ChatPanel(
   val scope = rememberCoroutineScope()
   val snackbarHostState = remember { SnackbarHostState() }
   val context = LocalContext.current
+  val secondaryDisplay =
+    if (task.id == BuiltInTaskId.LLM_CHAT) rememberSecondaryChatDisplay() else null
+  var useSecondaryDisplay by rememberSaveable { mutableStateOf(false) }
+  var secondaryDisplayShowing by remember { mutableStateOf(false) }
+  val secondaryKeyboardPinned = remember { mutableStateOf(false) }
+  val secondaryKeyboardVisible = remember { mutableStateOf(false) }
+  val secondaryWindowFocused = remember { mutableStateOf(false) }
+  val secondaryEditorFocused = remember { mutableStateOf(false) }
+  val activity = LocalActivity.current
+  val keepSecondaryKeyboard = secondaryDisplayShowing && secondaryKeyboardPinned.value
+  DisposableEffect(activity, keepSecondaryKeyboard) {
+    val window = activity?.window
+    val hadAlternateImeFocus =
+      ((window?.attributes?.flags ?: 0) and WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM) != 0
+    if (keepSecondaryKeyboard) {
+      // Keep this window focusable while the lower display owns the input method.
+      window?.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
+    }
+    onDispose {
+      if (keepSecondaryKeyboard && !hadAlternateImeFocus) {
+        window?.clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
+      }
+    }
+  }
   val clipboard =
     remember(context) { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
   val copyToClipboard: (String) -> Unit =
@@ -928,105 +962,194 @@ fun ChatPanel(
         )
       }
 
-      if (hasLiveMetrics) {
-        AnimatedVisibility(
-          visible = showLiveMetrics,
-          enter = fadeIn() + expandVertically(),
-          exit = fadeOut() + shrinkVertically(),
+      val composer: @Composable () -> Unit = {
+        val composerFocusManager = LocalFocusManager.current
+        val composerKeyboard = LocalSoftwareKeyboardController.current
+        val editorFocusRequester = remember { FocusRequester() }
+        val keepKeyboardOpen = secondaryDisplayShowing && secondaryKeyboardPinned.value
+        LaunchedEffect(
+          keepKeyboardOpen,
+          secondaryEditorFocused.value,
+          secondaryKeyboardVisible.value,
+          secondaryWindowFocused.value,
+          modelInitStatus,
+          uiState.isResettingSession,
+          showAudioRecorder,
         ) {
-          LiveMetricsBar(
-            liveMetricsFlow = viewModel.liveMetrics,
-            modelName = selectedModel.name,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-            isCompactingContext = contextCompactionStatus == ContextCompactionStatus.COMPACTING,
-          )
-        }
-      }
-
-      val modelManagerUiState by modelManagerViewModel.uiState.collectAsStateWithLifecycle()
-
-      MessageInputText(
-        task = task,
-        selectedModel = modelManagerUiState.selectedModel,
-        curMessage = curMessage,
-        inProgress = uiState.inProgress,
-        isResettingSession = uiState.isResettingSession,
-        modelPreparing = uiState.preparing,
-        imageCount = imageCountToLastConfigChange,
-        audioClipMessageCount = audioClipMesssageCountToLastconfigChange,
-        skillCount = skillCount,
-        mcpCount = mcpCount,
-        modelInitializing = modelInitStatus is Model.InitializationStatus.Initializing,
-        textFieldPlaceHolderRes = task.textInputPlaceHolderRes,
-        onValueChanged = { curMessage = it },
-        onSendMessage = {
-          viewModel.dismissLiveMetricsPrompt()
-          ttsController?.stop()
-          onSendMessage(selectedModel, it)
-          curMessage = ""
-          // Hide software keyboard.
-          focusManager.clearFocus()
-        },
-        onOpenPromptTemplatesClicked = {
-          ttsController?.stop()
-          onSendMessage(
-            selectedModel,
-            listOf(
-              ChatMessagePromptTemplates(
-                templates = selectedModel.llmProfile?.promptTemplates ?: emptyList(),
-                showMakeYourOwn = false,
-              )
-            ),
-          )
-        },
-        onStopButtonClicked = onStopButtonClicked,
-        onSetAudioRecorderVisible = { start ->
-          showAudioRecorder = start
-          if (!showAudioRecorder) {
-            curAmplitude = 0
+          if (
+            keepKeyboardOpen && secondaryWindowFocused.value &&
+              modelInitStatus !is Model.InitializationStatus.Initializing &&
+              !uiState.isResettingSession && !showAudioRecorder
+          ) {
+            awaitFrame()
+            editorFocusRequester.requestFocus()
+            awaitFrame()
+            composerKeyboard?.show()
           }
-        },
-        onAmplitudeChanged = { curAmplitude = it },
-        onSkillsClicked = onSkillClicked,
-        onMcpClicked = onMcpClicked,
-        onPickedImagesChanged = { pickedImagesCount = it.size },
-        onPickedAudioClipsChanged = { pickedAudioClipsCount = it.size },
-        showPromptTemplatesInMenu = false,
-        showSkillsPicker = task.id === BuiltInTaskId.LLM_AGENT_CHAT,
-        showMcpPicker = task.id === BuiltInTaskId.LLM_AGENT_CHAT,
-        showLiveMetricsToggle = hasLiveMetrics,
-        isLiveMetricsVisible = showLiveMetrics,
-        showLiveMetricsPrompt = uiState.showLiveMetricsPrompt,
-        onDismissLiveMetricsPrompt = viewModel::dismissLiveMetricsPrompt,
-        onToggleLiveMetrics = {
-          viewModel.toggleLiveMetrics(taskId = task.id, model = selectedModel)
-        },
-        showImagePicker = showImagePicker,
-        showAudioPicker = showAudioPicker,
-        showTextFilePicker = showTextFilePicker && isTextFileInputEnabled,
-        showStopButtonWhenInProgress = showStopButtonInInputWhenInProgress,
-        isContextLimitReached = isContextLimitReached,
-        onImageLimitExceeded = { showImageLimitBanner = true },
-        onImagesIgnored = {
-          scope.launch {
-            snackbarHostState.showSnackbar(
-              message = imageLimitIgnoredMsg,
-              duration = SnackbarDuration.Short,
+        }
+        if (hasLiveMetrics) {
+          AnimatedVisibility(
+            visible = showLiveMetrics,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+          ) {
+            LiveMetricsBar(
+              liveMetricsFlow = viewModel.liveMetrics,
+              modelName = selectedModel.name,
+              modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+              isCompactingContext = contextCompactionStatus == ContextCompactionStatus.COMPACTING,
+              compact = secondaryDisplayShowing && secondaryEditorFocused.value,
+              spacious = secondaryDisplayShowing,
             )
           }
-        },
-        onModelNotSupportImage = { customErrorMessage = modelNotSupportImageMsg },
-        onModelNotSupportAudio = { customErrorMessage = modelNotSupportAudioMsg },
-        textInputHistory = modelManagerUiState.textInputHistory,
-        onPromoteTextInputHistoryItem = modelManagerViewModel::promoteTextInputHistoryItem,
-        onDeleteTextInputHistoryItem = modelManagerViewModel::deleteTextInputHistory,
-        onClearTextInputHistory = modelManagerViewModel::clearTextInputHistory,
-        asrDictationUiState = asrDictationUiState,
-        onStartAsrDictation = asrDictationViewModel?.let { vm -> vm::start },
-        onFinishAsrDictation = asrDictationViewModel?.let { vm -> vm::finish },
-        onCancelAsrDictation = asrDictationViewModel?.let { vm -> vm::cancel },
-        onAsrDictationError = { customErrorMessage = asrUnavailableMsg },
-      )
+        }
+
+        val modelManagerUiState by modelManagerViewModel.uiState.collectAsStateWithLifecycle()
+
+        MessageInputText(
+          task = task,
+          selectedModel = modelManagerUiState.selectedModel,
+          curMessage = curMessage,
+          inProgress = uiState.inProgress,
+          isResettingSession = uiState.isResettingSession,
+          modelPreparing = uiState.preparing,
+          imageCount = imageCountToLastConfigChange,
+          audioClipMessageCount = audioClipMesssageCountToLastconfigChange,
+          skillCount = skillCount,
+          mcpCount = mcpCount,
+          modelInitializing = modelInitStatus is Model.InitializationStatus.Initializing,
+          textFieldPlaceHolderRes = task.textInputPlaceHolderRes,
+          onValueChanged = { curMessage = it },
+          editorModifier = Modifier.focusRequester(editorFocusRequester),
+          onEditorFocusChanged = {
+            if (secondaryDisplayShowing) secondaryEditorFocused.value = it
+          },
+          onSendMessage = {
+            viewModel.dismissLiveMetricsPrompt()
+            ttsController?.stop()
+            onSendMessage(selectedModel, it)
+            curMessage = ""
+            if (!keepKeyboardOpen) {
+              composerKeyboard?.hide()
+              composerFocusManager.clearFocus(force = true)
+              secondaryEditorFocused.value = false
+            }
+          },
+          onOpenPromptTemplatesClicked = {
+            ttsController?.stop()
+            onSendMessage(
+              selectedModel,
+              listOf(
+                ChatMessagePromptTemplates(
+                  templates = selectedModel.llmProfile?.promptTemplates ?: emptyList(),
+                  showMakeYourOwn = false,
+                )
+              ),
+            )
+          },
+          onStopButtonClicked = onStopButtonClicked,
+          onSetAudioRecorderVisible = { start ->
+            showAudioRecorder = start
+            if (!showAudioRecorder) {
+              curAmplitude = 0
+            }
+          },
+          onAmplitudeChanged = { curAmplitude = it },
+          onSkillsClicked = onSkillClicked,
+          onMcpClicked = onMcpClicked,
+          onPickedImagesChanged = { pickedImagesCount = it.size },
+          onPickedAudioClipsChanged = { pickedAudioClipsCount = it.size },
+          showPromptTemplatesInMenu = false,
+          showSkillsPicker = task.id === BuiltInTaskId.LLM_AGENT_CHAT,
+          showMcpPicker = task.id === BuiltInTaskId.LLM_AGENT_CHAT,
+          showLiveMetricsToggle = hasLiveMetrics,
+          isLiveMetricsVisible = showLiveMetrics,
+          showLiveMetricsPrompt = uiState.showLiveMetricsPrompt,
+          onDismissLiveMetricsPrompt = viewModel::dismissLiveMetricsPrompt,
+          onToggleLiveMetrics = {
+            viewModel.toggleLiveMetrics(taskId = task.id, model = selectedModel)
+          },
+          displayModeButton = {
+            if (secondaryDisplay != null) {
+              val label =
+                if (secondaryDisplayShowing) R.string.chat_use_single_screen
+                else R.string.chat_use_dual_screen
+              ChatToolbarToggleButton(
+                icon = Icons.Outlined.ViewAgenda,
+                contentDescription = stringResource(label),
+                checked = secondaryDisplayShowing,
+                enabled = pickedImagesCount == 0 && pickedAudioClipsCount == 0 && !showAudioRecorder,
+                onToggle = { useSecondaryDisplay = !secondaryDisplayShowing },
+              )
+            }
+          },
+          keyboardPinButton = {
+            if (secondaryDisplayShowing) {
+              ChatToolbarToggleButton(
+                icon = Icons.Outlined.Keyboard,
+                contentDescription = stringResource(
+                  if (keepKeyboardOpen) R.string.chat_unpin_keyboard else R.string.chat_pin_keyboard
+                ),
+                checked = keepKeyboardOpen,
+                enabled = !showAudioRecorder,
+                onToggle = {
+                  secondaryKeyboardPinned.value = !keepKeyboardOpen
+                  if (keepKeyboardOpen) {
+                    composerKeyboard?.hide()
+                    composerFocusManager.clearFocus(force = true)
+                  }
+                },
+              )
+            }
+          },
+          showImagePicker = showImagePicker,
+          showAudioPicker = showAudioPicker,
+          showTextFilePicker = showTextFilePicker && isTextFileInputEnabled,
+          showStopButtonWhenInProgress = showStopButtonInInputWhenInProgress,
+          isContextLimitReached = isContextLimitReached,
+          onImageLimitExceeded = { showImageLimitBanner = true },
+          onImagesIgnored = {
+            scope.launch {
+              snackbarHostState.showSnackbar(
+                message = imageLimitIgnoredMsg,
+                duration = SnackbarDuration.Short,
+              )
+            }
+          },
+          onModelNotSupportImage = { customErrorMessage = modelNotSupportImageMsg },
+          onModelNotSupportAudio = { customErrorMessage = modelNotSupportAudioMsg },
+          textInputHistory = modelManagerUiState.textInputHistory,
+          onPromoteTextInputHistoryItem = modelManagerViewModel::promoteTextInputHistoryItem,
+          onDeleteTextInputHistoryItem = modelManagerViewModel::deleteTextInputHistory,
+          onClearTextInputHistory = modelManagerViewModel::clearTextInputHistory,
+          asrDictationUiState = asrDictationUiState,
+          onStartAsrDictation = asrDictationViewModel?.let { vm -> vm::start },
+          onFinishAsrDictation = asrDictationViewModel?.let { vm -> vm::finish },
+          onCancelAsrDictation = asrDictationViewModel?.let { vm -> vm::cancel },
+          onAsrDictationError = { customErrorMessage = asrUnavailableMsg },
+        )
+      }
+      if (useSecondaryDisplay && secondaryDisplay != null) {
+        SecondaryChatComposer(
+          display = secondaryDisplay,
+          editorFocused = secondaryEditorFocused,
+          keyboardPinned = secondaryKeyboardPinned,
+          keyboardVisible = secondaryKeyboardVisible,
+          windowFocused = secondaryWindowFocused,
+          onShowingChanged = {
+            secondaryDisplayShowing = it
+            if (!it) {
+              secondaryEditorFocused.value = false
+              secondaryKeyboardPinned.value = false
+            }
+          },
+          onDismiss = { useSecondaryDisplay = false },
+          content = composer,
+        )
+      }
+      if (!secondaryDisplayShowing) {
+        composer()
+      }
     }
   }
 

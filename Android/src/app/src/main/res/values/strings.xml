@@ -1,3 +1,4 @@
+<!-- Modified for Retroid Pocket Duo by radium-wang, 2026. -->
 <!--
  Copyright 2025 Google LLC
 
@@ -15,6 +16,10 @@
 -->
 
 <resources xmlns:tools="http://schemas.android.com/tools">
+  <string name="chat_use_dual_screen">Dual screen</string>
+  <string name="chat_pin_keyboard">Keep keyboard open</string>
+  <string name="chat_unpin_keyboard">Release keyboard</string>
+  <string name="chat_use_single_screen">Single screen</string>
   <string name="about_this_update" translatable="true" description="Title of the alert dialog that shows information about a model update. [CHAR_LIMIT=29]">About this update</string>
   <string name="all" translatable="true" description="Label for selecting or filtering all items (e.g., all models, all cutouts). [CHAR_LIMIT=18]">All</string>
   <string name="add" translatable="true" description="Button label to add a new item, such as a skill or server. [CHAR_LIMIT=6]">Add</string>
@@ -55,9 +60,9 @@
   <string name="aichat_initializing_title" translatable="true" description="Status indicator when initializing model. [CHAR_LIMIT=31]">Initializing model</string>
   <string name="aichat_initializing_content" translatable="true" description="Loading message shown while a chat or translator session is initializing. [CHAR_LIMIT=110]">Sit tight, this can take up to 1 minute</string>
   <string name="app_intro" translatable="true" description="Introduction text shown on the home screen. [CHAR_LIMIT=90]">Explore a world of amazing on-device models from</string>
-  <string name="app_name" translatable="false">Google AI Edge Gallery</string>
-  <string name="app_name_first_part" translatable="false">Google AI</string>
-  <string name="app_name_second_part" translatable="false">Edge Gallery</string>
+  <string name="app_name" translatable="false">AI Edge Gallery · RP Duo</string>
+  <string name="app_name_first_part" translatable="false">AI Edge Gallery</string>
+  <string name="app_name_second_part" translatable="false">RP Duo</string>
   <string name="askimage_emptystate_title" translatable="false">Ask Image</string>
   <string name="askimage_emptystate_content" translatable="true" description="Instructions shown when starting a chat with image input, explaining how to add images (up to 10). [CHAR_LIMIT=203]">To get started, tap the + below to add an image (max 10 images per chat) and type a prompt to ask a question about it!</string>
   <string name="askimage_emptystate_content_aicore" translatable="true" description="Instructions shown when starting a chat with image input for AICore models, explaining how to add a single image. [CHAR_LIMIT=200]">To get started, tap the + below to add an image (max 1 image per chat) and type a prompt to ask a question about it!</string>

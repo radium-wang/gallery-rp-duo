@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2025 Google LLC
  *
@@ -141,7 +142,7 @@ private const val ALLOWLIST_BASE_URL =
  *
  * Delete the file to go back to the regular allowlist.
  */
-const val MODEL_ALLOWLIST_TEST_FILE_PATH = "/data/local/tmp/model_allowlist_test.json"
+const val MODEL_ALLOWLIST_TEST_FILE_PATH = "model_allowlist_test.json"
 
 enum class TokenStatus {
   NOT_STORED,
@@ -474,7 +475,7 @@ constructor(
   private val storageManager = DownloadStorageManager(context, modelsDir)
 
   /** Local test allowlist; see [MODEL_ALLOWLIST_TEST_FILE_PATH]. Overridden in tests. */
-  @VisibleForTesting internal var localTestAllowlistFile = File(MODEL_ALLOWLIST_TEST_FILE_PATH)
+  @VisibleForTesting internal var localTestAllowlistFile = File(modelsDir, MODEL_ALLOWLIST_TEST_FILE_PATH)
 
   /** Dispatcher that [loadModelAllowlist] runs on. Overridden in tests to load synchronously. */
   @VisibleForTesting internal var allowlistLoadingDispatcher: CoroutineDispatcher = Dispatchers.IO

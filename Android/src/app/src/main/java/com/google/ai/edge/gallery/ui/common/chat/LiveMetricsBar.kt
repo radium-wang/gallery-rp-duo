@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2026 Google LLC
  *
@@ -96,6 +97,8 @@ fun LiveMetricsBar(
   modelName: String,
   modifier: Modifier = Modifier,
   isCompactingContext: Boolean = false,
+  compact: Boolean = false,
+  spacious: Boolean = false,
 ) {
   val liveMetrics by liveMetricsFlow.collectAsStateWithLifecycle()
   val activeMetrics =
@@ -105,6 +108,8 @@ fun LiveMetricsBar(
     metrics = activeMetrics,
     modifier = modifier,
     isCompactingContext = isCompactingContext,
+    compact = compact,
+    spacious = spacious,
   )
 }
 
@@ -120,6 +125,8 @@ fun LiveMetricsBar(
   metrics: InferenceMetrics,
   modifier: Modifier = Modifier,
   isCompactingContext: Boolean = false,
+  compact: Boolean = false,
+  spacious: Boolean = false,
 ) {
   val uiState = resolveLiveMetricsUiState(metrics, isCompactingContext = isCompactingContext)
   val compressThresholdFraction = SummarizationContextCompactor.TOKEN_LIMIT_THRESHOLD_RATIO
@@ -134,8 +141,16 @@ fun LiveMetricsBar(
     tonalElevation = 1.dp,
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-      verticalArrangement = Arrangement.spacedBy(6.dp),
+      modifier =
+        Modifier.fillMaxWidth().padding(
+          horizontal = 12.dp,
+          vertical = when {
+            spacious -> 24.dp
+            compact -> 6.dp
+            else -> 8.dp
+          },
+        ),
+      verticalArrangement = Arrangement.spacedBy(if (spacious) 14.dp else 6.dp),
     ) {
       // Row 1: Speed, Tokens, RAM (3 balanced columns) + dedicated trailing info button
       Row(
@@ -162,6 +177,14 @@ fun LiveMetricsBar(
           subtextLines = listOfNotNull(uiState.ramSubtext),
           modifier = Modifier.weight(1f),
         )
+        if (compact) {
+          ContextUsage(
+            uiState,
+            compressThresholdFraction,
+            compressThresholdPercent,
+            modifier = Modifier.weight(1.25f),
+          )
+        }
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
           TooltipBox(
             positionProvider = rememberClampedTooltipPositionProvider(),
@@ -191,111 +214,122 @@ fun LiveMetricsBar(
         }
       }
 
-      // Row 2: Context window usage + progress bar + auto-compaction threshold marker
-      val warningColor = MaterialTheme.customColors.warningTextColor
-      Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Text(
-            text = stringResource(R.string.live_metrics_context),
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-          Text(
-            text = uiState.contextUsageText,
-            style =
-              MaterialTheme.typography.labelSmall.copy(
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Medium,
-                fontFeatureSettings = TABULAR_NUMS_FEATURE,
-              ),
-            color =
-              when {
-                uiState.isCompactingContext -> MaterialTheme.colorScheme.primary
-                uiState.isHighContextUsage -> warningColor
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-              },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            autoSize = LABEL_TEXT_AUTO_SIZE,
-            modifier = Modifier.weight(1f, fill = false),
-          )
-        }
-
-        val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-        BoxWithConstraints(
-          modifier = Modifier.fillMaxWidth().height(7.dp),
-          contentAlignment = AbsoluteAlignment.CenterLeft,
-        ) {
-          if (uiState.isCompactingContext) {
-            LinearProgressIndicator(
-              modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(1.5.dp)),
-              color = MaterialTheme.colorScheme.primary,
-              trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            )
-          } else {
-            LinearProgressIndicator(
-              progress = { (uiState.contextUsedPercent / 100f).coerceIn(0f, 1f) },
-              modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(1.5.dp)),
-              color =
-                if (uiState.isHighContextUsage) {
-                  warningColor
-                } else {
-                  MaterialTheme.colorScheme.primary
-                },
-              trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            )
-
-            // Automatic context compression threshold tick mark. Use physical left alignment and
-            // absoluteOffset so the tick mirrors to 25% from the left in RTL layouts, matching
-            // the RTL progress fill and Row weights below.
-            val tickFractionFromLeft =
-              if (isRtl) 1f - compressThresholdFraction else compressThresholdFraction
-            Box(
-              modifier =
-                Modifier.absoluteOffset(x = maxWidth * tickFractionFromLeft - 0.75.dp)
-                  .width(1.5.dp)
-                  .height(7.dp)
-                  .clip(RoundedCornerShape(0.75.dp))
-                  .background(
-                    if (uiState.isHighContextUsage) {
-                      warningColor
-                    } else {
-                      MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    }
-                  )
-            )
-          }
-        }
-
-        // Compress label centered beneath the tick mark (0.55 + 0.40 / 2 = 0.75)
-        Row(modifier = Modifier.fillMaxWidth()) {
-          Spacer(modifier = Modifier.weight(0.55f))
-          Box(modifier = Modifier.weight(0.40f), contentAlignment = Alignment.Center) {
-            Text(
-              text =
-                stringResource(
-                  R.string.live_metrics_context_compress_mark,
-                  compressThresholdPercent,
-                ),
-              style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, lineHeight = 10.sp),
-              color =
-                if (uiState.isHighContextUsage) {
-                  warningColor
-                } else {
-                  MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                },
-              maxLines = 1,
-            )
-          }
-          Spacer(modifier = Modifier.weight(0.05f))
-        }
+      if (!compact) {
+        ContextUsage(uiState, compressThresholdFraction, compressThresholdPercent)
       }
+    }
+  }
+}
+
+@Composable
+private fun ContextUsage(
+  uiState: LiveMetricsUiState,
+  compressThresholdFraction: Float,
+  compressThresholdPercent: Int,
+  modifier: Modifier = Modifier,
+) {
+  val warningColor = MaterialTheme.customColors.warningTextColor
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
+        text = stringResource(R.string.live_metrics_context),
+        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      Text(
+        text = uiState.contextUsageText,
+        style =
+          MaterialTheme.typography.labelSmall.copy(
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium,
+            fontFeatureSettings = TABULAR_NUMS_FEATURE,
+          ),
+        color =
+          when {
+            uiState.isCompactingContext -> MaterialTheme.colorScheme.primary
+            uiState.isHighContextUsage -> warningColor
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+          },
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = LABEL_TEXT_AUTO_SIZE,
+        modifier = Modifier.weight(1f, fill = false),
+      )
+    }
+
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    BoxWithConstraints(
+      modifier = Modifier.fillMaxWidth().height(7.dp),
+      contentAlignment = AbsoluteAlignment.CenterLeft,
+    ) {
+      if (uiState.isCompactingContext) {
+        LinearProgressIndicator(
+          modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(1.5.dp)),
+          color = MaterialTheme.colorScheme.primary,
+          trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        )
+      } else {
+        LinearProgressIndicator(
+          progress = { (uiState.contextUsedPercent / 100f).coerceIn(0f, 1f) },
+          modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(1.5.dp)),
+          color =
+            if (uiState.isHighContextUsage) {
+              warningColor
+            } else {
+              MaterialTheme.colorScheme.primary
+            },
+          trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        )
+
+        // Automatic context compression threshold tick mark. Use physical left alignment and
+        // absoluteOffset so the tick mirrors to 25% from the left in RTL layouts, matching
+        // the RTL progress fill and Row weights below.
+        val tickFractionFromLeft =
+          if (isRtl) 1f - compressThresholdFraction else compressThresholdFraction
+        Box(
+          modifier =
+            Modifier.absoluteOffset(x = maxWidth * tickFractionFromLeft - 0.75.dp)
+              .width(1.5.dp)
+              .height(7.dp)
+              .clip(RoundedCornerShape(0.75.dp))
+              .background(
+                if (uiState.isHighContextUsage) {
+                  warningColor
+                } else {
+                  MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                }
+              )
+        )
+      }
+    }
+
+    // Compress label centered beneath the tick mark (0.55 + 0.40 / 2 = 0.75)
+    Row(modifier = Modifier.fillMaxWidth()) {
+      Spacer(modifier = Modifier.weight(0.55f))
+      Box(modifier = Modifier.weight(0.40f), contentAlignment = Alignment.Center) {
+        Text(
+          text =
+            stringResource(
+              R.string.live_metrics_context_compress_mark,
+              compressThresholdPercent,
+            ),
+          style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, lineHeight = 10.sp),
+          color =
+            if (uiState.isHighContextUsage) {
+              warningColor
+            } else {
+              MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+            },
+          maxLines = 1,
+        )
+      }
+      Spacer(modifier = Modifier.weight(0.05f))
     }
   }
 }

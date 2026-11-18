@@ -1,3 +1,4 @@
+// Modified for Retroid Pocket Duo by radium-wang, 2026.
 /*
  * Copyright 2026 Google LLC
  *
@@ -151,11 +152,7 @@ interface MetricsTracker {
       timeSource: TimeSource = TimeSource.Monotonic,
     ): MetricsTracker {
 
-      val enableInferenceMetrics = false
-
-      if (!enableInferenceMetrics) {
-        // Returns a no-op tracker if benchmark telemetry is disabled or the model does not support
-        // benchmark mode.
+      if (!model.supportModelBenchmark) {
         return NoOpMetricsTracker()
       }
 
@@ -279,22 +276,12 @@ internal constructor(
    */
   private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
 
-  /**
-   * Whether live metrics streaming is enabled for this tracker instance. Captured once at
-   * construction time so the live stream behavior remains consistent across the session.
-   */
-  private val enableLiveMetrics: Boolean = false
-
-  private val liveUpdateSampler: PeriodicSampler? =
-    if (enableLiveMetrics) {
-      PeriodicSampler(
-        samplingInterval = config.liveUpdateInterval,
-        dispatcher = ioDispatcher,
-        onSample = ::emitLiveSnapshotIfTurnActive,
-      )
-    } else {
-      null
-    }
+  private val liveUpdateSampler =
+    PeriodicSampler(
+      samplingInterval = config.liveUpdateInterval,
+      dispatcher = ioDispatcher,
+      onSample = ::emitLiveSnapshotIfTurnActive,
+    )
 
   @Synchronized
   override fun onModelInitialized() {
@@ -313,7 +300,7 @@ internal constructor(
     memoryMonitor?.start(scope)
     powerMonitor?.start(scope)
     if (isLiveMetricsEnabled) {
-      liveUpdateSampler?.start(scope)
+      liveUpdateSampler.start(scope)
       emitLiveSnapshot()
     }
   }
@@ -342,7 +329,7 @@ internal constructor(
 
   @Synchronized
   override fun resetSession() {
-    liveUpdateSampler?.stop()
+    liveUpdateSampler.stop()
     refreshSessionTracker()
     memoryMonitor?.reset()
     powerMonitor?.reset()
@@ -369,13 +356,13 @@ internal constructor(
     if (enabled) {
       emitLiveSnapshot()
     } else {
-      liveUpdateSampler?.stop()
+      liveUpdateSampler.stop()
     }
   }
 
   @Synchronized
   override fun close() {
-    liveUpdateSampler?.stop()
+    liveUpdateSampler.stop()
     memoryMonitor?.reset()
     powerMonitor?.reset()
     scope.cancel()
@@ -390,7 +377,6 @@ internal constructor(
 
   @Synchronized
   private fun emitLiveSnapshot() {
-    if (!enableLiveMetrics) return
     val turnMetrics = inferenceTracker?.buildLiveMetrics() ?: return
     val isTurnActive = turnMetrics.status.code != InferenceStatus.Code.IDLE
     _liveMetrics.value = inferenceMetrics {
@@ -422,11 +408,11 @@ internal constructor(
   private fun endTurnInternal(status: InferenceStatus): InferenceMetrics? {
     val (finalMetrics, liveMetricsEnabled) =
       synchronized(this) {
-        liveUpdateSampler?.stop()
+        liveUpdateSampler.stop()
         val turnMetrics = inferenceTracker?.endTurn(status = status) ?: return null
         val memoryMetrics = memoryMonitor?.stop() ?: MemoryMetrics.getDefaultInstance()
         val batteryMetrics = powerMonitor?.stop() ?: BatteryMetrics.getDefaultInstance()
-        val liveEnabled = enableLiveMetrics && isLiveMetricsEnabled
+        val liveEnabled = isLiveMetricsEnabled
         val metrics =
           inferenceMetrics {
               this.metadata = this@LitertlmMetricsTracker.metadata

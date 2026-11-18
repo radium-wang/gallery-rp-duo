@@ -1,1 +1,11 @@
 .DS_Store
+
+# Local signing material and downloaded models
+*.keystore
+*.jks
+*.p12
+*.litertlm
+*.gguf
+
+# Kotlin compiler state
+.kotlin/
