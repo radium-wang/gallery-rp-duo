@@ -1,19 +1,19 @@
 {
   "canvas": [
-    1847,
-    2115
+    1830,
+    2024
   ],
   "windows": {
     "upper": {
-      "x": 283,
-      "y": 175,
+      "x": 275,
+      "y": 129,
       "width": 1280,
       "height": 720,
       "source": "upper-display.png"
     },
     "lower": {
-      "x": 443,
-      "y": 1224,
+      "x": 435,
+      "y": 1134,
       "width": 960,
       "height": 720,
       "source": "lower-display.png"
@@ -22,5 +22,30 @@
   "frame": "rp-duo-frame.png",
   "preview": "rp-duo-preview.png",
   "resampling": "Lanczos",
-  "source": "User-provided device frame; transparent outer edge cleaned before deterministic screenshot composition."
+  "source": "User-provided device frame; transparent outer edge cleaned before deterministic screenshot composition.",
+  "plastic_bezel_bounds": {
+    "upper": {
+      "x": 200,
+      "y": 103,
+      "width": 1430,
+      "height": 778
+    },
+    "lower": {
+      "x": 408,
+      "y": 1102,
+      "width": 1014,
+      "height": 800
+    }
+  },
+  "calibration": {
+    "references": [
+      "IMG_9761",
+      "IMG_9762",
+      "IMG_9763",
+      "IMG_9764"
+    ],
+    "method": "Photo-based approximate perspective rectification; piecewise geometric correction of the supplied frame. Not manufacturer CAD.",
+    "screen_width_ratio_lower_to_upper": 0.75,
+    "screen_height_ratio_lower_to_upper": 1.0
+  }
 }
