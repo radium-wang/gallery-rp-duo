@@ -4,6 +4,10 @@
 
 A community adaptation of Google AI Edge Gallery for the Retroid Pocket Duo. Based on upstream 1.0.23, commit 9cb31cf47c21b0ed76901ff589a52b509803edfa. Android changes maintained by radium-wang.
 
+<p align="center">
+  <img src="docs/screenshots/rp-duo-preview.png" width="680" alt="RP Duo fully open, with chat on the upper display and metrics, input and pinned keyboard on the lower display" />
+</p>
+
 ## RP Duo features
 
 - Chat replies and model settings on the upper display, with the composer on the lower display.
@@ -16,11 +20,9 @@ A community adaptation of Google AI Edge Gallery for the Retroid Pocket Duo. Bas
 
 ## Screenshots
 
-<img src="docs/screenshots/upper-display.png" width="720" alt="Upper display showing a local Gemma 4 E2B conversation" />
+[Full-size device preview](docs/screenshots/rp-duo-preview.png) · [Original upper display](docs/screenshots/upper-display.png) · [Original lower display](docs/screenshots/lower-display.png)
 
-<img src="docs/screenshots/lower-display.png" width="640" alt="Lower display showing metrics, composer and pinned system keyboard" />
-
-Original device captures from one short demonstration; displayed speed is not a benchmark guarantee. A separate device-frame asset is being refined. This is a community project; Google and Retroid do not endorse it.
+Actual display captures inserted into a user-provided device frame. Displayed speed describes one short demonstration. This is a community project; Google and Retroid do not endorse it.
 
 ## Install
 
